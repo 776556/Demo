@@ -23,22 +23,19 @@ namespace Demo.Controllers
         // GET api/Demo
         public IHttpActionResult Get()
         {
-            ResponseModel<List<DemoModel>> responseModel = new ResponseModel<List<DemoModel>>();
-            try {
+            try
+            {
                 using (var conn = new System.Data.SQLite.SQLiteConnection(_connectionStr))
                 {
-                    conn.Open();
                     var sql = @" SELECT * FROM Demo";
                     List<DemoModel> listData = conn.Query<DemoModel>(sql).ToList();
-                    responseModel.Status = 1;
-                    responseModel.retObj = listData;
-                    responseModel.errMsg = "";
+                    return Json(listData);
                 }
-            } catch (Exception ex) {
-                responseModel.Status = 0;
-                responseModel.errMsg = ex.Message;
             }
-            return Json(responseModel);
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
         /// <summary>
         /// 條件查詢
@@ -48,25 +45,20 @@ namespace Demo.Controllers
         // GET api/Demo/5
         public IHttpActionResult Get(string id)
         {
-            ResponseModel<List<DemoModel>> responseModel = new ResponseModel<List<DemoModel>>();
             try
             {
                 using (var conn = new System.Data.SQLite.SQLiteConnection(_connectionStr))
                 {
-                    conn.Open();
+                   // conn.Open();
                     var sql = @" SELECT * FROM Demo WHERE ID=@ID";
-                    List<DemoModel> listData = conn.Query<DemoModel>(sql,new { ID= id }).ToList();
-                    responseModel.Status = 1;
-                    responseModel.retObj = listData;
-                    responseModel.errMsg = "";
+                    List<DemoModel> listData = conn.Query<DemoModel>(sql, new { ID = id }).ToList();
+                    return Json(listData);
                 }
             }
             catch (Exception ex)
             {
-                responseModel.Status = 0;
-                responseModel.errMsg = ex.Message;
+                return BadRequest(ex.Message);
             }
-            return Json(responseModel);
         }
 
 
@@ -78,14 +70,12 @@ namespace Demo.Controllers
         // POST api/Demo
         public IHttpActionResult Post([FromBody] List<DemoModel> model)
         {
-            ResponseModel<string> responseModel = new ResponseModel<string>();
             try
             {
-
                 var data = from m in model
                            where string.IsNullOrEmpty(m.NAME)
                            select m;
-                if (data!=null && data.Count()>0)
+                if (data != null && data.Count() > 0)
                 {
                     throw new Exception("NAME 不能為空");
                 }
@@ -100,29 +90,74 @@ namespace Demo.Controllers
 		                                (@NAME)";
                         conn.Execute(sql, model);
                         transaction.Commit();
-                        responseModel.Status = 1;
-                        responseModel.errMsg = "";
+                        return Json("新增成功");
                     }
                 }
             }
             catch (Exception ex)
             {
-                responseModel.Status = 0;
-                responseModel.errMsg = ex.Message;
+                return BadRequest(ex.Message);
             }
-            return Json(responseModel);
         }
-
+        /// <summary>
+        /// 修改
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         // PUT api/Demo/5
-        public void Put([FromBody]DemoModel mode)
+        public IHttpActionResult Put([FromBody]DemoModel model)
         {
-        
-        }
+            try
+            {
+                if (string.IsNullOrEmpty(model?.ID))
+                {
+                    throw new Exception("ID 不能為空");
+                }
+                if (string.IsNullOrEmpty(model?.NAME))
+                {
+                    throw new Exception("NAME 不能為空");
+                }
+                using (var conn = new System.Data.SQLite.SQLiteConnection(_connectionStr))
+                {
+                    var sql = @" UPDATE [Demo]
+	                            SET [NAME] = @NAME
+	                            WHERE ID=@ID";
+                    conn.Execute(sql, model);
 
+                    return Json("修改成功");
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        /// <summary>
+        /// 刪除
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         // DELETE api/Demo/5
-        public void Delete(int id)
+        public IHttpActionResult Delete(string id)
         {
-           
+            try
+            {
+                if (string.IsNullOrEmpty(id))
+                {
+                    throw new Exception("ID 不能為空");
+                }
+                using (var conn = new System.Data.SQLite.SQLiteConnection(_connectionStr))
+                {
+                    var sql = @" DELETE FROM [Demo]
+		                        WHERE ID=@ID ";
+                    conn.Execute(sql, new { ID = id });
+                    return Json("刪除成功");
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }
