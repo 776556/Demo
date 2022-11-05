@@ -5,13 +5,10 @@ using System.Web;
 
 namespace Demo.Models
 {
-    public class DemoModel
+    public class NoetBodyModel
     {
-        public DemoModel()
-        {
-            NAME = "";
-        }
         public string ID { get; set; }
-        public string NAME { get; set; }
+        public string date { get; set; }
+        public string remark { get; set; }   
     }
 }

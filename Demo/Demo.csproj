@@ -180,7 +180,12 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Models\DemoModel.cs" />
+    <Compile Include="Models\NoetBodyModel.cs" />
+    <Compile Include="Models\NoetHeadModel.cs" />
+    <Compile Include="Models\RequestInsertBodyModel.cs" />
+    <Compile Include="Models\RequestInsertHeadModel.cs" />
+    <Compile Include="Models\RequestInsertModel.cs" />
+    <Compile Include="Models\ResponseQueryModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

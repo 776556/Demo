@@ -27,9 +27,20 @@ namespace Demo.Controllers
             {
                 using (var conn = new System.Data.SQLite.SQLiteConnection(_connectionStr))
                 {
-                    var sql = @" SELECT * FROM Demo";
-                    List<DemoModel> listData = conn.Query<DemoModel>(sql).ToList();
-                    return Json(listData);
+                    string queryHeadSql = @"SELECT * FROM note_head ";
+                    string queryBodySql = @"SELECT * FROM note_body WHERE [date]=@date";
+                    List<NoetHeadModel> listData = conn.Query<NoetHeadModel>(queryHeadSql).ToList();
+                    List<ResponseQueryModel> listResponseQueryModel = new List<ResponseQueryModel>();
+                    if (listData!= null && listData.Count>0) {
+                        foreach (NoetHeadModel noetHeadModel in listData) {
+                            List<NoetBodyModel> listBodyData = conn.Query<NoetBodyModel>(queryBodySql,new {date= noetHeadModel.date }).ToList();
+                            ResponseQueryModel responseQueryModel = new ResponseQueryModel();
+                            responseQueryModel.Head = noetHeadModel;
+                            responseQueryModel.Body = listBodyData;
+                            listResponseQueryModel.Add(responseQueryModel);
+                        }
+                    }
+                    return Json(listResponseQueryModel);
                 }
             }
             catch (Exception ex)
@@ -43,16 +54,29 @@ namespace Demo.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         // GET api/Demo/5
-        public IHttpActionResult Get(string id)
+        [System.Web.Http.Route("api/Demo/{date}")]
+        public IHttpActionResult Get(string date)
         {
             try
             {
                 using (var conn = new System.Data.SQLite.SQLiteConnection(_connectionStr))
                 {
-                   // conn.Open();
-                    var sql = @" SELECT * FROM Demo WHERE ID=@ID";
-                    List<DemoModel> listData = conn.Query<DemoModel>(sql, new { ID = id }).ToList();
-                    return Json(listData);
+                    string queryHeadSql = @"SELECT * FROM note_head WHERE [date]=@date";
+                    string queryBodySql = @"SELECT * FROM note_body WHERE [date]=@date";
+                    List<NoetHeadModel> listData = conn.Query<NoetHeadModel>(queryHeadSql,new { date= date }).ToList();
+                    List<ResponseQueryModel> listResponseQueryModel = new List<ResponseQueryModel>();
+                    if (listData != null && listData.Count > 0)
+                    {
+                        foreach (NoetHeadModel noetHeadModel in listData)
+                        {
+                            List<NoetBodyModel> listBodyData = conn.Query<NoetBodyModel>(queryBodySql, new { date = noetHeadModel.date }).ToList();
+                            ResponseQueryModel responseQueryModel = new ResponseQueryModel();
+                            responseQueryModel.Head = noetHeadModel;
+                            responseQueryModel.Body = listBodyData;
+                            listResponseQueryModel.Add(responseQueryModel);
+                        }
+                    }
+                    return Json(listResponseQueryModel);
                 }
             }
             catch (Exception ex)
@@ -68,31 +92,54 @@ namespace Demo.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         // POST api/Demo
-        public IHttpActionResult Post([FromBody] List<DemoModel> model)
+        public IHttpActionResult Post([FromBody] RequestInsertModel request)
         {
             try
-            {
-                var data = from m in model
-                           where string.IsNullOrEmpty(m.NAME)
-                           select m;
-                if (data != null && data.Count() > 0)
-                {
-                    throw new Exception("NAME 不能為空");
+            { 
+                RequestInsertHeadModel head = request?.head;
+                List<RequestInsertBodyModel> body = request?.body;
+                if (head ==null || string.IsNullOrEmpty(head.name)) {
+                    throw new Exception("請輸入Name");
                 }
+
+                if (body ==null || body.Count==0) {
+                    throw new Exception("請輸入一筆remark資料");
+                }
+                string date = DateTime.Now.ToString("yyyyMMddHHmmss");
                 using (var conn = new System.Data.SQLite.SQLiteConnection(_connectionStr))
                 {
                     conn.Open();
                     using (IDbTransaction transaction = conn.BeginTransaction())
                     {
-                        var sql = @" INSERT INTO [Demo]
-		                                ([NAME])
-	                                 VALUES
-		                                (@NAME)";
-                        conn.Execute(sql, model);
+                        var insertHeadSql = @" INSERT INTO [note_head]
+		                                            ([date]
+		                                            ,[name])
+	                                            VALUES
+		                                            (@date
+                                                    ,@name)";
+                        NoetHeadModel noetHeadModel = new NoetHeadModel();
+                        noetHeadModel.date = date;
+                        noetHeadModel.name = head.name;
+                        conn.Execute(insertHeadSql, noetHeadModel);
+                        var insertBodySql = @" INSERT INTO [note_body]
+		                                            ([date]
+		                                            ,[remark])
+	                                            VALUES
+		                                            (@date,
+		                                             @remark)";
+                        List<NoetBodyModel> listNoetBodyModel = new List<NoetBodyModel>();
+                        foreach (RequestInsertBodyModel requestInsertBodyModel in body) {
+                            NoetBodyModel noetBodyModel = new NoetBodyModel();
+                            noetBodyModel.date = date;
+                            noetBodyModel.remark = requestInsertBodyModel.remark;
+                            listNoetBodyModel.Add(noetBodyModel);
+                        }
+                        int count=conn.Execute(insertBodySql, listNoetBodyModel);
                         transaction.Commit();
-                        return Json("新增成功");
+                        return Json($"成功新增{count}資料");
                     }
                 }
+                //---------------------------
             }
             catch (Exception ex)
             {
@@ -105,25 +152,30 @@ namespace Demo.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         // PUT api/Demo/5
-        public IHttpActionResult Put([FromBody]DemoModel model)
+        public IHttpActionResult Put([FromBody] RequestUpdateModel request)
         {
             try
             {
-                if (string.IsNullOrEmpty(model?.ID))
+                NoetHeadModel head = request?.head;
+                List<NoetBodyModel> body = request?.body;
+               
+
+                if (body == null || body.Count == 0)
                 {
-                    throw new Exception("ID 不能為空");
-                }
-                if (string.IsNullOrEmpty(model?.NAME))
-                {
-                    throw new Exception("NAME 不能為空");
+                    throw new Exception("請輸入一筆remark資料");
                 }
                 using (var conn = new System.Data.SQLite.SQLiteConnection(_connectionStr))
                 {
-                    var sql = @" UPDATE [Demo]
-	                            SET [NAME] = @NAME
-	                            WHERE ID=@ID";
-                    conn.Execute(sql, model);
+                    var updateHeadSql = @" UPDATE [note_head]
+	                                       SET [name] = @name
+	                                       WHERE date=@date";
+                    var updateBSql = "";
 
+
+                   if (head != null && !string.IsNullOrEmpty(head.name))
+                    {
+                        int count = conn.Execute(updateHeadSql, head);
+                    }
                     return Json("修改成功");
                 }
             }
@@ -138,20 +190,30 @@ namespace Demo.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         // DELETE api/Demo/5
-        public IHttpActionResult Delete(string id)
+        [System.Web.Http.Route("api/Demo/{date}")]
+        [System.Web.Http.HttpDelete]
+        public IHttpActionResult Delete(string date)
         {
             try
             {
-                if (string.IsNullOrEmpty(id))
+                if (string.IsNullOrEmpty(date))
                 {
-                    throw new Exception("ID 不能為空");
+                    throw new Exception("date 不能為空");
                 }
                 using (var conn = new System.Data.SQLite.SQLiteConnection(_connectionStr))
                 {
-                    var sql = @" DELETE FROM [Demo]
-		                        WHERE ID=@ID ";
-                    conn.Execute(sql, new { ID = id });
-                    return Json("刪除成功");
+                    conn.Open();
+                    using (IDbTransaction transaction = conn.BeginTransaction())
+                    {
+                        var sql = @" DELETE FROM [note_head]
+		                             WHERE date=@date;
+                                     DELETE FROM [note_body]
+		                             WHERE date=@date;
+                                   ";
+                       int count= conn.Execute(sql, new { date = date });
+                       transaction.Commit();
+                       return Json($"成功刪除{count}筆資料");
+                    }
                 }
             }
             catch (Exception ex)
