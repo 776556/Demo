@@ -185,6 +185,8 @@
     <Compile Include="Models\RequestInsertBodyModel.cs" />
     <Compile Include="Models\RequestInsertHeadModel.cs" />
     <Compile Include="Models\RequestInsertModel.cs" />
+    <Compile Include="Models\RequestUpdateBodyModel.cs" />
+    <Compile Include="Models\RequestUpdateModel.cs" />
     <Compile Include="Models\ResponseQueryModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

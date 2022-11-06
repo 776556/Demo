@@ -98,10 +98,9 @@ namespace Demo.Controllers
             { 
                 RequestInsertHeadModel head = request?.head;
                 List<RequestInsertBodyModel> body = request?.body;
-                if (head ==null || string.IsNullOrEmpty(head.name)) {
+                if (string.IsNullOrEmpty(head?.name)) {
                     throw new Exception("請輸入Name");
                 }
-
                 if (body ==null || body.Count==0) {
                     throw new Exception("請輸入一筆remark資料");
                 }
@@ -157,25 +156,36 @@ namespace Demo.Controllers
             try
             {
                 NoetHeadModel head = request?.head;
-                List<NoetBodyModel> body = request?.body;
-               
-
+                List<RequestUpdateBodyModel> body = request?.body;
+                if (string.IsNullOrEmpty(head?.date))
+                {
+                    throw new Exception("date不能為空");
+                }
+                if (string.IsNullOrEmpty(head?.name))
+                {
+                    throw new Exception("請輸入Name");
+                }
                 if (body == null || body.Count == 0)
                 {
-                    throw new Exception("請輸入一筆remark資料");
+                    throw new Exception("請輸入一筆body資料");
+                }
+                var data = from m in body
+                           where string.IsNullOrEmpty(m.ID)|| string.IsNullOrEmpty(m.remark)
+                           select m;
+                if (data!= null && data.Count()>0) {
+                    throw new Exception("ID或remark不能為空");
                 }
                 using (var conn = new System.Data.SQLite.SQLiteConnection(_connectionStr))
                 {
-                    var updateHeadSql = @" UPDATE [note_head]
-	                                       SET [name] = @name
-	                                       WHERE date=@date";
-                    var updateBSql = "";
+                    var updateHeadSql = @"UPDATE [note_head]
+	                                      SET [name] = @name
+	                                      WHERE date=@date";
+                    var updateBodySql = @"UPDATE [note_body]
+	                                      SET [remark] = @remark
+	                                      WHERE ID=@ID";
 
-
-                   if (head != null && !string.IsNullOrEmpty(head.name))
-                    {
-                        int count = conn.Execute(updateHeadSql, head);
-                    }
+                    conn.Execute(updateHeadSql, head);
+                    conn.Execute(updateBodySql, body);
                     return Json("修改成功");
                 }
             }

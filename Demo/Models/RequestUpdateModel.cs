@@ -8,6 +8,6 @@ namespace Demo.Models
     public class RequestUpdateModel
     {
         public NoetHeadModel head { get; set; }
-        public List<NoetBodyModel> body { get; set; }
+        public List<RequestUpdateBodyModel> body { get; set; }
     }
 }
