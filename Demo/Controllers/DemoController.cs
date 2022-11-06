@@ -138,7 +138,6 @@ namespace Demo.Controllers
                         return Json($"成功新增{count}資料");
                     }
                 }
-                //---------------------------
             }
             catch (Exception ex)
             {
@@ -150,7 +149,6 @@ namespace Demo.Controllers
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
-        // PUT api/Demo/5
         public IHttpActionResult Put([FromBody] RequestUpdateModel request)
         {
             try
