@@ -119,7 +119,7 @@ namespace Demo.Controllers
                         NoetHeadModel noetHeadModel = new NoetHeadModel();
                         noetHeadModel.date = date;
                         noetHeadModel.name = head.name;
-                        conn.Execute(insertHeadSql, noetHeadModel);
+                        conn.Execute(insertHeadSql, noetHeadModel, transaction);
                         var insertBodySql = @" INSERT INTO [note_body]
 		                                            ([date]
 		                                            ,[remark])
@@ -133,9 +133,9 @@ namespace Demo.Controllers
                             noetBodyModel.remark = requestInsertBodyModel.remark;
                             listNoetBodyModel.Add(noetBodyModel);
                         }
-                        int count=conn.Execute(insertBodySql, listNoetBodyModel);
+                        int count=conn.Execute(insertBodySql, listNoetBodyModel, transaction);
                         transaction.Commit();
-                        return Json($"成功新增{count}資料");
+                        return Json($"成功新增資料");
                     }
                 }
             }
@@ -175,15 +175,19 @@ namespace Demo.Controllers
                 }
                 using (var conn = new System.Data.SQLite.SQLiteConnection(_connectionStr))
                 {
-                    var updateHeadSql = @"UPDATE [note_head]
+                    conn.Open();
+                    using (IDbTransaction transaction = conn.BeginTransaction())
+                    {
+                        var updateHeadSql = @"UPDATE [note_head]
 	                                      SET [name] = @name
 	                                      WHERE date=@date";
-                    var updateBodySql = @"UPDATE [note_body]
+                        var updateBodySql = @"UPDATE [note_body]
 	                                      SET [remark] = @remark
 	                                      WHERE ID=@ID";
 
-                    conn.Execute(updateHeadSql, head);
-                    conn.Execute(updateBodySql, body);
+                        conn.Execute(updateHeadSql, head, transaction);
+                        conn.Execute(updateBodySql, body, transaction);
+                    }
                     return Json("修改成功");
                 }
             }
@@ -218,9 +222,9 @@ namespace Demo.Controllers
                                      DELETE FROM [note_body]
 		                             WHERE date=@date;
                                    ";
-                       int count= conn.Execute(sql, new { date = date });
+                       int count= conn.Execute(sql, new { date = date }, transaction);
                        transaction.Commit();
-                       return Json($"成功刪除{count}筆資料");
+                       return Json($"成功刪除{date}資料");
                     }
                 }
             }
