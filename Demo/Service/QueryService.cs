@@ -38,10 +38,6 @@ namespace Demo.Service
             }
             return listResponseQueryModel;
         }
-        private List<T> Query<T>(string sql) where T : new()
-        {
-                return Query<T>(sql,"");
-        }
         private List<T> Query<T>(string sql ,Object obj) where T : new()
         {
             using (var conn = new System.Data.SQLite.SQLiteConnection(_connectionStr))
