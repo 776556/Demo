@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Demo.Models;
+using Demo.Service;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -25,23 +26,8 @@ namespace Demo.Controllers
         {
             try
             {
-                using (var conn = new System.Data.SQLite.SQLiteConnection(_connectionStr))
-                {
-                    string queryHeadSql = @"SELECT * FROM note_head ";
-                    string queryBodySql = @"SELECT * FROM note_body WHERE [date]=@date";
-                    List<NoetHeadModel> listData = conn.Query<NoetHeadModel>(queryHeadSql).ToList();
-                    List<ResponseQueryModel> listResponseQueryModel = new List<ResponseQueryModel>();
-                    if (listData!= null && listData.Count>0) {
-                        foreach (NoetHeadModel noetHeadModel in listData) {
-                            List<NoetBodyModel> listBodyData = conn.Query<NoetBodyModel>(queryBodySql,new {date= noetHeadModel.date }).ToList();
-                            ResponseQueryModel responseQueryModel = new ResponseQueryModel();
-                            responseQueryModel.Head = noetHeadModel;
-                            responseQueryModel.Body = listBodyData;
-                            listResponseQueryModel.Add(responseQueryModel);
-                        }
-                    }
-                    return Json(listResponseQueryModel);
-                }
+                QueryService queryService = new QueryService(_connectionStr);
+                return Json(queryService.Query());
             }
             catch (Exception ex)
             {
@@ -59,25 +45,13 @@ namespace Demo.Controllers
         {
             try
             {
-                using (var conn = new System.Data.SQLite.SQLiteConnection(_connectionStr))
-                {
-                    string queryHeadSql = @"SELECT * FROM note_head WHERE [date]=@date";
-                    string queryBodySql = @"SELECT * FROM note_body WHERE [date]=@date";
-                    List<NoetHeadModel> listData = conn.Query<NoetHeadModel>(queryHeadSql,new { date= date }).ToList();
-                    List<ResponseQueryModel> listResponseQueryModel = new List<ResponseQueryModel>();
-                    if (listData != null && listData.Count > 0)
-                    {
-                        foreach (NoetHeadModel noetHeadModel in listData)
-                        {
-                            List<NoetBodyModel> listBodyData = conn.Query<NoetBodyModel>(queryBodySql, new { date = noetHeadModel.date }).ToList();
-                            ResponseQueryModel responseQueryModel = new ResponseQueryModel();
-                            responseQueryModel.Head = noetHeadModel;
-                            responseQueryModel.Body = listBodyData;
-                            listResponseQueryModel.Add(responseQueryModel);
-                        }
-                    }
-                    return Json(listResponseQueryModel);
+                int Idate = 0;
+                
+                if (int.TryParse(date,out Idate)) {
+                    throw new Exception("date格式錯誤");
                 }
+                QueryService queryService = new QueryService(_connectionStr);
+                return Json(queryService.Query(date));
             }
             catch (Exception ex)
             {
