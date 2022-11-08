@@ -46,7 +46,6 @@ namespace Demo.Controllers
             try
             {
                 int Idate = 0;
-                
                 if (int.TryParse(date,out Idate)) {
                     throw new Exception("date格式錯誤");
                 }
